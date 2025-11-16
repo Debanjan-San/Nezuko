@@ -291,6 +291,7 @@ module.exports = async (client, m, commands, chatUpdate) => {
       },
     });
   } catch (e) {
+console.error(e)
     e = String(e);
     if (!e.includes("cmd.start")) console.error(e);
   }
