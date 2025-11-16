@@ -64,7 +64,7 @@ module.exports = async (client, m, commands, chatUpdate) => {
     let groupAdmin = isGroup
       ? participants.filter((v) => v.admin !== null).map((v) => v.id)
       : [];
-    const botNumber = await client.decodeJid(client.user.id);
+    const botNumber = await client.decodeJid(client.user.lid);
     let isBotAdmin = isGroup ? groupAdmin.includes(botNumber) : false;
     let isAdmin = isGroup ? groupAdmin.includes(sender) : false;
     //////////Database\\\\\\\\\\\\\\\\
