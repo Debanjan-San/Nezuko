@@ -94,7 +94,8 @@ exports.serialize = (conn, m, options = {}) => {
         m.id = m.key.id
         m.isBot = m.id.startsWith("BAE5") && m.id.length == 16
         m.isGroup = m.from.endsWith("@g.us")
-        m.sender = jidNormalizedUser(m.fromMe && conn.user?.id || m.key.participant || m.from || "")
+        m.sender =  m.key.fromMe
+                ? client.user.lid.split(':')[0] + '@lid' : m.key.participant || m.key.remoteJidAlt
     }
     if (m.message) {
         m.type = getContentType(m.message)
