@@ -8,7 +8,7 @@
     "@adiwajshing/keyed-db": "^0.2.4",
     "@canvas-fonts/arial-bold": "^1.0.4",
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "^6.6.0",
+    "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys"
     "anime-wallpaper": "^2.0.0",
     "axios": "1.6.7",
     "better-sqlite3": "^8.4.0",
