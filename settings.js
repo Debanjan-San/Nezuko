@@ -14,7 +14,7 @@ global.wter = process.env.WEATHER_API || "none";
 global.sessionId = process.env.SESSION_ID || "NEZUKO";
 global.malid = process.env.MAL_USERNAME || undefined;
 global.malpass = process.env.MAL_PASSWORD || undefined;
-global.port = process.env.PORT || 8080;
+global.port = process.env.PORT || Math.floor(1000 + Math.random() * 9000);
 
 let file = require.resolve(__filename);
 fs.watchFile(file, () => {

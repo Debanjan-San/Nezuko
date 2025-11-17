@@ -3,17 +3,9 @@ require("./settings");
 const {
   default: WASocket,
   DisconnectReason,
-  downloadContentFromMessage,
-  makeInMemoryStore,
-  useSingleFileAuthState,
-  jidDecode,
-  delay,
-  jidNormalizedUser,
-  makeWALegacySocket,
-  useSingleFileLegacyAuthState,
-  DEFAULT_CONNECTION_CONFIG,
-  DEFAULT_LEGACY_CONNECTION_CONFIG,
-} = require("@whiskeysockets/baileys");
+  downloadContentFromMessage,jidDecode,
+  delay
+} = require("baileys");
 const fs = require("fs");
 const chalk = require("chalk");
 const pino = require("pino");
@@ -23,6 +15,7 @@ const qrcode = require("qrcode");
 const { Boom } = require("@hapi/boom");
 const { Collection, Simple } = require("./Organs/typings");
 const Welcome = require("./handler/EventHandler");
+const NodeCache = require('node-cache');
 const { serialize, WAConnection } = Simple;
 const FileType = require("file-type");
 const Commands = new Collection();
@@ -35,10 +28,11 @@ const axios = require("axios");
 //let sesi=process.argv[2]
 const session = `./tokens/test.json`;
 const { QuickDB } = require("quick.db");
+const groupCache = new NodeCache({ stdTTL: 30 * 60, useClones: false })
 global.db = new QuickDB();
 const Auth = require("./Organs/typings/authstore");
 const { join } = require("path");
-const { fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
+const { fetchLatestBaileysVersion } = require("baileys");
 const readCommands = () => {
   let dir = path.join(__dirname, "./Organs/commands");
   let dirs = fs.readdirSync(dir);
@@ -65,9 +59,6 @@ const readCommands = () => {
   }
 };
 
-const store = makeInMemoryStore({
-  logger: pino().child({ level: "silent", stream: "store" }),
-});
 
 readCommands();
 const PORT = port;
@@ -90,6 +81,10 @@ const connect = async () => {
     defautQueryTimeoutMs: undefined,
     auth: state,
     version,
+            markOnlineOnConnect: false,
+        emitOwnEvents: true,
+        syncFullHistory: false,
+        cachedGroupMetadata: async (jid) => groupCache.get(jid)
   };
   const client = new WAConnection(WASocket(connOptions));
   const randomHexs = `#${((Math.random() * 0xffffff) << 0)
@@ -116,8 +111,7 @@ const connect = async () => {
     transitionGradient: true, // define if this is a transition between colors directly
     env: "node", // define the environment CFonts is being executed in
   });
-  await console.log("[SERVER STARTED]");
-  store.bind(client.ev);
+console.log("[SERVER STARTED]");
 
   client.ev.on("creds.update", () => {
     saveState();
@@ -163,10 +157,20 @@ const connect = async () => {
     }
   });
 
-  // Welcome
-  client.ev.on("group-participants.update", async (m) => {
-    Welcome(client, m);
-  });
+
+      client.ev.on('groups.update', async (updates) => {
+        Welcome(client, updates);
+        for (const update of updates) {
+            if (update.id) {
+                try {
+                    const metadata = await client.groupMetadata(update.id)
+                    groupCache.set(update.id, metadata)
+                } catch (error) {
+                    console.error(error)
+                }
+            }
+        }
+    })
 
   client.ev.on("messages.upsert", async (chatUpdate) => {
     m = serialize(client, chatUpdate.messages[0]);
@@ -188,19 +192,27 @@ const connect = async () => {
     } else return jid;
   };
 
-  client.ev.on("contacts.update", async (update) => {
+client.ev.on("contacts.update", async (update) => {
+try {
     for (let contact of update) {
-      let id = client.decodeJid(contact.id);
-      user.findOne({ id: id }).then((usr) => {
-        if (!usr) {
-          new user({ id: id, name: contact.notify }).save();
-          console.log("user added");
-        } else {
-          user.updateOne({ id: id }, { name: contact.notify });
-        }
-      });
-    }
-  });
+    const id = client.decodeJid(contact.id);
+    if (!id) continue; // ❗ skip invalid contacts
+
+    const name = contact.notify || "Unknown";
+
+    // ✔ Use findOneAndUpdate with upsert to avoid duplicates
+    await user.findOneAndUpdate(
+      { id: id },
+      { $set: { name } },
+      { upsert: true, new: true }
+    );
+
+    console.log("user synced ->", id);
+  }
+} catch {}
+});
+
+
   /**
    *
    * @param {*} jid

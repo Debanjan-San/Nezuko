@@ -4,7 +4,7 @@ const {
   generateWAMessage,
   areJidsSameUser,
   proto,
-} = require("@whiskeysockets/baileys");
+} = require("baileys");
 const { Function } = require("../lib");
 const { Collection, Simple } = require("../Organs/typings");
 const { isUrl, isNumber } = Function;
@@ -30,6 +30,7 @@ global.user = require("../models/user");
 module.exports = async (client, m, commands, chatUpdate) => {
   try {
     let { type, isGroup, sender, from } = m;
+    console.log(sender)
     let body =
       type == "buttonsResponseMessage"
         ? m.message[type].selectedButtonId
@@ -64,7 +65,7 @@ module.exports = async (client, m, commands, chatUpdate) => {
     let groupAdmin = isGroup
       ? participants.filter((v) => v.admin !== null).map((v) => v.id)
       : [];
-    const botNumber = await client.decodeJid(client.user.lid);
+    const botNumber = await client.decodeJid(client.user.id);
     let isBotAdmin = isGroup ? groupAdmin.includes(botNumber) : false;
     let isAdmin = isGroup ? groupAdmin.includes(sender) : false;
     //////////Database\\\\\\\\\\\\\\\\
@@ -260,6 +261,7 @@ module.exports = async (client, m, commands, chatUpdate) => {
     timestamps.set(m.sender, now);
     setTimeout(() => timestamps.delete(m.sender), cdAmount);
 
+    if (!cmd) return
     cmd.start(client, m, {
       name: "client ",
       metadata,
@@ -293,6 +295,7 @@ module.exports = async (client, m, commands, chatUpdate) => {
   } catch (e) {
 console.error(e)
     e = String(e);
+    console.error(e)
     if (!e.includes("cmd.start")) console.error(e);
   }
 };

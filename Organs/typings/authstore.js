@@ -6,7 +6,7 @@ https://github.com/LuckyYam/WhatsApp-bot/
 *****/
 
 
-const { initAuthCreds, BufferJSON, proto } = require('@whiskeysockets/baileys')
+const { initAuthCreds, BufferJSON, proto } = require('baileys')
 const Database = require('./database')
 
 module.exports = class Authenication {

@@ -1,5 +1,5 @@
-const { extensionForMediaMessage, extractMessageContent, jidNormalizedUser, getContentType, normalizeMessageContent, proto, delay, downloadContentFromMessage, getBinaryNodeChild } = require("@whiskeysockets/baileys")
-const baileys = require("@whiskeysockets/baileys")
+const { extensionForMediaMessage, extractMessageContent, jidNormalizedUser, getContentType, normalizeMessageContent, proto, delay, downloadContentFromMessage, getBinaryNodeChild } = require("baileys")
+const baileys = require("baileys")
 const fs = require("fs")
 const chalk = require("chalk")
 const FileType = require("file-type")
@@ -94,8 +94,7 @@ exports.serialize = (conn, m, options = {}) => {
         m.id = m.key.id
         m.isBot = m.id.startsWith("BAE5") && m.id.length == 16
         m.isGroup = m.from.endsWith("@g.us")
-        m.sender =  m.key.fromMe
-                ? client.user.lid.split(':')[0] + '@lid' : m.key.participant || m.key.remoteJidAlt
+        m.sender = jidNormalizedUser(m.fromMe && conn.user?.id || m.key.participant || m.from || "")
     }
     if (m.message) {
         m.type = getContentType(m.message)
